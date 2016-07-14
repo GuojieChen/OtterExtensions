@@ -5,17 +5,17 @@ using Inedo.Otter.Extensibility;
 using Inedo.Otter.Extensibility.Configurations;
 using Inedo.Serialization;
 
-namespace OtterExtensions.Firewall
+namespace OtterExtensions.System
 {
     [Serializable]
-    [DisplayName("Ensure FwPorts")]
+    [DisplayName("FwPort")]
     public class FwPortConfiguration : PersistedConfiguration
     {
         [ConfigurationKey]
         [Persistent]
         [Required]
         [ScriptAlias("Name")]
-        [DisplayName("AppSetting key")]
+        [DisplayName("key")]
         [Description("The configuration key name represented by the ensuring operation.")]
         public string Name { get; set; }
 
@@ -29,10 +29,13 @@ namespace OtterExtensions.Firewall
         [Persistent]
         [Required]
         [ScriptAlias("Ports")]
-        [DisplayName("Specific local ports")]
-        [Description("Example:80,443,5000-5010")]
-        public string Ports { get; set; }
+        [DisplayName("Port")]
+        [Description("")]
+        public int Port { get; set; }
 
-        
+        public FwPortConfiguration()
+        {
+            Protocal = "";
+        }
     }
 }

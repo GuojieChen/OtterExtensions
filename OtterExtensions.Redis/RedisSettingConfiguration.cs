@@ -8,7 +8,7 @@ using Inedo.Serialization;
 namespace OtterExtensions.Redis
 {
     [Serializable]
-    [DisplayName("Ensure Redis Setting")]
+    [DisplayName("Redis Configuration")]
     public class RedisSettingConfiguration : PersistedConfiguration
     {
         [ConfigurationKey]

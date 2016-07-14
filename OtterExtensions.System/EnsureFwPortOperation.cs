@@ -13,96 +13,92 @@ using Inedo.Otter.Extensibility.Configurations;
 using Inedo.Otter.Extensibility.Operations;
 using NetFwTypeLib;
 
-namespace OtterExtensions.Firewall
+namespace OtterExtensions.System
 {
-    [DisplayName("Ensure Firewall Ports")]
-    [Description("Ensures Firewall Ports.")]
+    [DisplayName("Ensure Firewall Port")]
+    [Description("Ensures Firewall Port.")]
     [ScriptNamespace("OtterExtensions")]
-    [ScriptAlias("Ensure-FwPorts")]
+    [ScriptAlias("Ensure-FwPort")]
     [Tag("system")]
     public class EnsureFwPortOperation : EnsureOperation<FwPortConfiguration>
     {
         protected override ExtendedRichDescription GetDescription(IOperationConfiguration config)
         {
 
-            return new ExtendedRichDescription(new RichDescription("Ensure firewall Ports ", new Hilite(config[nameof(FwPortConfiguration.Ports)]), " named ", new Hilite(config[nameof(FwPortConfiguration.Name)])));
+            return new ExtendedRichDescription(new RichDescription("Ensure firewall Port ", new Hilite(config[nameof(FwPortConfiguration.Name)]), " ", new Hilite(config[nameof(FwPortConfiguration.Protocal)]), " ", new Hilite(config[nameof(FwPortConfiguration.Port)])));
         }
 
         public override async Task<PersistedConfiguration> CollectAsync(IOperationExecutionContext context)
         {
-            //创建firewall管理类的实例  
+            this.LogInformation($"Ensure firewall port {this.Template.Name} {this.Template.Protocal} {this.Template.Port}");
+            //创建firewall管理类的实例
             var netFwMgr = (INetFwMgr)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwMgr"));
 
-
-            return new FwPortConfiguration
+            var conf = new FwPortConfiguration
             {
-
+                Name = this.Template.Name
             };
+
+            NET_FW_IP_PROTOCOL_ protocol = NET_FW_IP_PROTOCOL_.NET_FW_IP_PROTOCOL_UDP; 
+            if (this.Template.Protocal.ToUpper() == "TCP")
+            {
+                protocol = NET_FW_IP_PROTOCOL_.NET_FW_IP_PROTOCOL_TCP;
+            }
+            
+
+            foreach (INetFwOpenPort mPort in netFwMgr.LocalPolicy.CurrentProfile.GloballyOpenPorts)
+            {
+                if (Equals(mPort.Name.ToUpper(), this.Template.Name.ToUpper()) && Equals(mPort.Protocol, protocol) && this.Template.Port == mPort.Port)
+                {
+                    conf.Name = mPort.Name;
+                    conf.Port = mPort.Port;
+                    conf.Protocal = mPort.Protocol == NET_FW_IP_PROTOCOL_.NET_FW_IP_PROTOCOL_TCP?"TCP":"UDP";
+                    break;
+                }
+            }
+
+            return conf;
         }
 
         public override async Task ConfigureAsync(IOperationExecutionContext context)
         {
+            //创建firewall管理类的实例  
+            INetFwMgr netFwMgr = (INetFwMgr)Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwMgr"));
 
-        }
+            INetFwOpenPort objPort = (INetFwOpenPort)Activator.CreateInstance(
+                Type.GetTypeFromProgID("HNetCfg.FwOpenPort"));
 
-        protected internal object GetInstance(string typeName)
-        {
-            Type tpResult = null;
-            switch (typeName)
+            objPort.Name = this.Template.Name;
+            objPort.Port = this.Template.Port;
+            if (this.Template.Protocal.ToUpper() == "TCP")
             {
-                case "INetFwMgr":
-                    tpResult = Type.GetTypeFromCLSID(new Guid("{304CE942-6E39-40D8-943A-B913C40C9CD4}"));
-                    return Activator.CreateInstance(tpResult);
-                case "INetAuthApp":
-                    tpResult = Type.GetTypeFromCLSID(new Guid("{EC9846B3-2762-4A6B-A214-6ACB603462D2}"));
-                    return Activator.CreateInstance(tpResult);
-                case "INetOpenPort":
-                    tpResult = Type.GetTypeFromCLSID(new Guid("{0CA545C6-37AD-4A6C-BF92-9F7610067EF5}"));
-                    return Activator.CreateInstance(tpResult);
-                default:
-                    return null;
+                objPort.Protocol = NET_FW_IP_PROTOCOL_.NET_FW_IP_PROTOCOL_TCP;
             }
-        }
-
-        protected internal bool isAppFound(string appName)
-        {
-            bool boolResult = false;
-            Type progID = null;
-            INetFwMgr firewall = null;
-            INetFwAuthorizedApplications apps = null;
-            INetFwAuthorizedApplication app = null;
-            try
+            else
             {
-                progID = Type.GetTypeFromProgID("HNetCfg.FwMgr");
-                firewall = Activator.CreateInstance(progID) as INetFwMgr;
-                if (firewall.LocalPolicy.CurrentProfile.FirewallEnabled)
+                objPort.Protocol = NET_FW_IP_PROTOCOL_.NET_FW_IP_PROTOCOL_UDP;
+            }
+            objPort.Scope = NET_FW_SCOPE_.NET_FW_SCOPE_ALL;
+            objPort.Enabled = true;
+
+            bool exist = false;
+            //加入到防火墙的管理策略  
+            foreach (INetFwOpenPort mPort in netFwMgr.LocalPolicy.CurrentProfile.GloballyOpenPorts)
+            {
+                if (Equals(mPort.Name.ToUpper(), this.Template.Name.ToUpper()) && Equals(mPort.Protocol, objPort.Protocol) && objPort.Port == mPort.Port)
                 {
-                    apps = firewall.LocalPolicy.CurrentProfile.AuthorizedApplications;
-                    IEnumerator appEnumerate = apps.GetEnumerator();
-                    while ((appEnumerate.MoveNext()))
-                    {
-                        app = appEnumerate.Current as INetFwAuthorizedApplication;
-                        if (app.Name == appName)
-                        {
-                            boolResult = true;
-                            break;
-                        }
-                    }
+                    exist = true;
+                    break;
                 }
             }
-            catch (Exception ex)
+            if (exist)
+                this.LogInformation($"firewall port exists");
+            else
             {
-                //LOG
-                return false;
+                this.LogInformation($"set firewall port {this.Template.Name} {this.Template.Protocal} {this.Template.Port}");
+
+                netFwMgr.LocalPolicy.CurrentProfile.GloballyOpenPorts.Add(objPort);
             }
-            finally
-            {
-                if (progID != null) progID = null;
-                if (firewall != null) firewall = null;
-                if (apps != null) apps = null;
-                if (app != null) app = null;
-            }
-            return boolResult;
         }
     }
 }

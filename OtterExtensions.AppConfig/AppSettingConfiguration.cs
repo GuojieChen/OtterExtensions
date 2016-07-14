@@ -8,7 +8,7 @@ using Inedo.Serialization;
 namespace OtterExtensions.AppConfig
 {
     [Serializable]
-    [DisplayName("Ensure AppSetting(V2)")]
+    [DisplayName("AppSetting(V2)")]
     public class AppSettingConfiguration : PersistedConfiguration
     {
         [ConfigurationKey]

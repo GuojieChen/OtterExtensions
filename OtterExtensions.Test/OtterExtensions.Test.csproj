@@ -44,10 +44,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="OtterExtensionsSystemTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="OtterExtensions.Firewall.Test.cs" />
+    <Compile Include="OtterExtensionsFirewallTest.cs" />
     <Compile Include="OtterExtensionsRedisTest.cs" />
     <None Include="files\redis.windows.conf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
