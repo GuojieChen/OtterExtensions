@@ -63,8 +63,8 @@
   <ItemGroup>
     <Compile Include="AppSettingConfiguration.cs" />
     <Compile Include="ConnectionSettingConfiguration.cs" />
-    <Compile Include="EnsureAppSettingOerration.cs" />
-    <Compile Include="EnsureConnectionSettingOerration.cs" />
+    <Compile Include="EnsureAppSettingOperation.cs" />
+    <Compile Include="EnsureConnectionSettingOperation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

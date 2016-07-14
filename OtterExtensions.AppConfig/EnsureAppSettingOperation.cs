@@ -15,7 +15,7 @@ namespace OtterExtensions.AppConfig
     [ScriptNamespace("OtterExtensions")]
     [ScriptAlias("Ensure-AppSetting-V2")]
     [Tag("dotnet")]
-    public class EnsureAppSettingOerration : EnsureOperation<AppSettingConfiguration>
+    public class EnsureAppSettingOperation : EnsureOperation<AppSettingConfiguration>
     {
         protected override ExtendedRichDescription GetDescription(IOperationConfiguration config)
         {

@@ -15,7 +15,7 @@ namespace OtterExtensions.AppConfig
     [ScriptNamespace("OtterExtensions")]
     [ScriptAlias("Ensure-ConnectionString")]
     [Tag("dotnet")]
-    public class EnsureConnectionSettingOerration : EnsureOperation<ConnectionSettingConfiguration>
+    public class EnsureConnectionSettingOperation : EnsureOperation<ConnectionSettingConfiguration>
     {
         protected override ExtendedRichDescription GetDescription(IOperationConfiguration config)
         {
