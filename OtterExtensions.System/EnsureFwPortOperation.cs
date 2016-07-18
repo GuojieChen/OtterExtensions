@@ -48,9 +48,9 @@ namespace OtterExtensions.System
 
             foreach (INetFwOpenPort mPort in netFwMgr.LocalPolicy.CurrentProfile.GloballyOpenPorts)
             {
-                if (Equals(mPort.Name.ToUpper(), this.Template.Name.ToUpper()) && Equals(mPort.Protocol, protocol) && this.Template.Port == mPort.Port)
+                if (Equals(mPort.Protocol, protocol) && this.Template.Port == mPort.Port)
                 {
-                    conf.Name = mPort.Name;
+                    conf.Name = this.Template.Name;
                     conf.Port = mPort.Port;
                     conf.Protocal = mPort.Protocol == NET_FW_IP_PROTOCOL_.NET_FW_IP_PROTOCOL_TCP?"TCP":"UDP";
                     break;
