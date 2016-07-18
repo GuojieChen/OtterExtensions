@@ -19,7 +19,10 @@ namespace OtterExtensions.AppConfig
     {
         protected override ExtendedRichDescription GetDescription(IOperationConfiguration config)
         {
-            return new ExtendedRichDescription(new RichDescription("Ensure ", new Hilite(config[nameof(AppSettingConfiguration.Key)]), " = ", new Hilite(config[nameof(AppSettingConfiguration.Value)])));
+            return
+                new ExtendedRichDescription(new RichDescription("Ensure ",
+                    new Hilite(config[nameof(AppSettingConfiguration.Key)]), " = ",
+                    new Hilite(config[nameof(AppSettingConfiguration.Value)])));
         }
 
         public override async Task<PersistedConfiguration> CollectAsync(IOperationExecutionContext context)
@@ -44,10 +47,30 @@ namespace OtterExtensions.AppConfig
         {
             this.LogInformation($"AppSetting \"{this.Template.Key}\" set to \"{this.Template.Value}\" in \"{this.Template.File}\"");
 
-            XDocument document = XDocument.Load(this.Template.File);
-            document.Descendants("appSettings")
-                       .Descendants("add")
-                       .First(x => x.Attribute("name").Value == this.Template.Key).Attribute("value").Value = this.Template.Value;
+            var document = XDocument.Load(this.Template.File);
+            var appsettingnode = document.Descendants("configuration").Descendants("appSettings").FirstOrDefault();
+            if (appsettingnode == null)
+            {
+                this.LogError("AppSettings node null");
+
+                return; 
+            }
+            var node = appsettingnode.Descendants("add").FirstOrDefault(item => item.Attribute("key").Value == this.Template.Key);
+            if (node == null)
+            {
+                this.LogInformation("node not exists");
+                node = new XElement("add");
+                node.Attribute("key").Value = this.Template.Value;
+                node.Attribute("value").Value = this.Template.Value;
+
+                appsettingnode.Add(node);
+            }
+            else
+            {
+                node.Attribute("value").Value = this.Template.Value;
+            }
+
+
             document.Save(this.Template.File);
 
         }

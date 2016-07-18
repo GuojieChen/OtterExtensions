@@ -48,9 +48,31 @@ namespace OtterExtensions.AppConfig
             this.LogInformation($"name : ${this.Template.File}.");
 
             XDocument document = XDocument.Load(this.Template.File);
-            document.Descendants("connectionStrings")
-                       .Descendants("add")
-                       .First(x => x.Attribute("name").Value == this.Template.Name).Attribute("connectionString").Value = this.Template.ConnectionString;
+
+            var appsettingnode = document.Descendants("configuration").Descendants("connectionStrings").FirstOrDefault();
+            if (appsettingnode == null)
+            {
+                this.LogError("connectionStrings node null");
+
+                return;
+            }
+
+            var node = appsettingnode.Descendants("add").FirstOrDefault(item => item.Attribute("name").Value == this.Template.Name);
+            if (node == null)
+            {
+                this.LogInformation("node not exists");
+                node = new XElement("add");
+                node.Attribute("name").Value = this.Template.Name;
+                node.Attribute("value").Value = this.Template.ConnectionString;
+
+                appsettingnode.Add(node);
+            }
+            else
+            {
+                node.Attribute("value").Value = this.Template.ConnectionString;
+            }
+
+
             document.Save(this.Template.File);
 
         }
