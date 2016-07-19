@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -20,7 +22,7 @@ namespace OtterExtensions.AppConfig
         protected override ExtendedRichDescription GetDescription(IOperationConfiguration config)
         {
             return
-                new ExtendedRichDescription(new RichDescription("Ensure ",
+                new ExtendedRichDescription(new RichDescription("Ensure AppSetting ",
                     new Hilite(config[nameof(AppSettingConfiguration.Key)]), " = ",
                     new Hilite(config[nameof(AppSettingConfiguration.Value)])));
         }
@@ -28,19 +30,38 @@ namespace OtterExtensions.AppConfig
         public override async Task<PersistedConfiguration> CollectAsync(IOperationExecutionContext context)
         {
 
-            this.LogInformation($"Ensure {this.Template.Key} = {this.Template.Value} in {this.Template.File}");
+            this.LogInformation($"Ensure AppSetting {this.Template.Key} = {this.Template.Value} in {this.Template.File}");
 
-            XDocument document = XDocument.Load(this.Template.File);
-            var value = document.Descendants("appSettings")
+            if(!File.Exists(this.Template.File))
+                return new AppSettingConfiguration
+                {
+                    Key = this.Template.Key,
+                };
+
+            try
+            {
+                var document = XDocument.Load(this.Template.File);
+                var value = document.Descendants("appSettings")
                        .Descendants("add")
                        .First(x => x.Attribute("key").Value == this.Template.Key).Attribute("value").Value;
 
-            return new AppSettingConfiguration
+                return new AppSettingConfiguration
+                {
+                    Key = this.Template.Key,
+                    File = this.Template.File,
+                    Value = value
+                };
+            }
+            catch (Exception)
             {
-                Key = this.Template.Key,
-                File = this.Template.File,
-                Value = value
-            };
+
+                return new AppSettingConfiguration
+                {
+                    Key = this.Template.Key,
+                    File = this.Template.File,
+                    Value = "Error!"
+                };
+            }
         }
 
         public override async Task ConfigureAsync(IOperationExecutionContext context)
@@ -59,9 +80,7 @@ namespace OtterExtensions.AppConfig
             if (node == null)
             {
                 this.LogInformation("node not exists");
-                node = new XElement("add");
-                node.Attribute("key").Value = this.Template.Value;
-                node.Attribute("value").Value = this.Template.Value;
+                node = new XElement("add",new XAttribute("key",this.Template.Key),new XAttribute("value",this.Template.Value));
 
                 appsettingnode.Add(node);
             }
